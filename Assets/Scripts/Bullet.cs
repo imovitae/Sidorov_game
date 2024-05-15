@@ -13,6 +13,13 @@ public class Bullet : MonoBehaviour
             //Попала в объект?! Уничтожай пулю | Если не попала то пуля пропадет через 3 сек
             print("hit"+collision.gameObject.name+ "!");
             Destroy(gameObject);  
+        }  
+        
+        if (collision.gameObject.CompareTag("Wall"))
+        {
+            //Попала в объект?! Уничтожай пулю | Если не попала то пуля пропадет через 3 сек
+            print("hit a wall ");
+            Destroy(gameObject);  
         }
     }
 
