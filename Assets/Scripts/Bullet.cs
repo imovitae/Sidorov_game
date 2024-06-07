@@ -5,22 +5,47 @@ using UnityEngine.UIElements;
 
 public class Bullet : MonoBehaviour
 {
-    private void OnCollisionEnter(Collision collision)
+
+    public int bulletDamage;
+    private void OnCollisionEnter(Collision objectWeHit)
     {
-        //�������� ������������ � �������� 
-        if (collision.gameObject.CompareTag("Target"))
+        //фиксация сталкновения с объектом 
+        if (objectWeHit.gameObject.CompareTag("Target"))
         {
-            //������ � ������?! ��������� ���� | ���� �� ������ �� ���� �������� ����� 3 ���
-            print("hit"+collision.gameObject.name+ "!");
+            //Попала в объект?! Уничтожай пулю | Если не попала то пуля пропадет через 3 сек
+            print("hit"+ objectWeHit.gameObject.name+ "!");
+            CreateBulletImpactEffect(objectWeHit);//точное положение куда мы попали 
             Destroy(gameObject);  
         }  
         
-        if (collision.gameObject.CompareTag("Wall"))
+        if (objectWeHit.gameObject.CompareTag("Wall"))
         {
-            //������ � ������?! ��������� ���� | ���� �� ������ �� ���� �������� ����� 3 ���
+            //Попала в объект?! Уничтожай пулю | Если не попала то пуля пропадет через 3 сек
             print("hit a wall ");
+            CreateBulletImpactEffect(objectWeHit);
             Destroy(gameObject);  
+        }
+
+        if (objectWeHit.gameObject.CompareTag("Alien"))
+        {
+            objectWeHit.gameObject.GetComponent<Alien>().TakeDamage(bulletDamage);
+            Destroy(gameObject);
         }
     }
 
+
+    void CreateBulletImpactEffect(Collision objectWeHit )//поражаем цель +эффект
+    {
+        //точка соприкосновения 
+        ContactPoint contact= objectWeHit.contacts[0];  //первая точка куда попадет пуля
+        GameObject hole = Instantiate(
+            GlobalReferences.Instance.bulletImpactEffectPrefab,
+            contact.point,//позиция создания
+            Quaternion.LookRotation(contact.normal)//вращение взгялад + достижение нормальной цели(чего мы хотим)
+            
+            );//фактического отверстия
+
+        hole.transform.SetParent(objectWeHit.gameObject.transform);    //дыра - дочерний элемент внутри родительского | трансформация объектов в которые поопали 
+
+    }
 }
