@@ -9,34 +9,34 @@ public class MouseMovement : MonoBehaviour
     float yRotation = 0f;
 
 
-    //степени зажима 
+    //СЃС‚РµРїРµРЅРё Р·Р°Р¶РёРјР° 
 
     public float topClamp = -90f;
     public float bottomClamp = 90f;
     // Start is called before the first frame update
     void Start()
     {
-        //Блокировка курсора 
+        //Р‘Р»РѕРєРёСЂРѕРІРєР° РєСѓСЂСЃРѕСЂР° 
         Cursor.lockState = CursorLockMode.Locked;
     }
 
     // Update is called once per frame
     void Update()
     {
-        //входные данные для мышки 
-        float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity * Time.deltaTime;//перемещение по оси X 
-        float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity * Time.deltaTime;//перемещение по оси Y 
+        //РІС…РѕРґРЅС‹Рµ РґР°РЅРЅС‹Рµ РґР»СЏ РјС‹С€РєРё 
+        float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity * Time.deltaTime;//РїРµСЂРµРјРµС‰РµРЅРёРµ РїРѕ РѕСЃРё X 
+        float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity * Time.deltaTime;//РїРµСЂРµРјРµС‰РµРЅРёРµ РїРѕ РѕСЃРё Y 
 
-        //Вращение вокрус оси (Смотря вверх и вниз)
+        //Р’СЂР°С‰РµРЅРёРµ РІРѕРєСЂСѓСЃ РѕСЃРё (РЎРјРѕС‚СЂСЏ РІРІРµСЂС… Рё РІРЅРёР·)
         xRotation -= mouseY;
 
-        //Фиксация вращения(блокировка при слишком поднятой камере) 
+        //Р¤РёРєСЃР°С†РёСЏ РІСЂР°С‰РµРЅРёСЏ(Р±Р»РѕРєРёСЂРѕРІРєР° РїСЂРё СЃР»РёС€РєРѕРј РїРѕРґРЅСЏС‚РѕР№ РєР°РјРµСЂРµ) 
         xRotation = Mathf.Clamp(xRotation, topClamp, bottomClamp);
 
-        //Вращение вокрус оси (Смотря влево и вправо)
+        //Р’СЂР°С‰РµРЅРёРµ РІРѕРєСЂСѓСЃ РѕСЃРё (РЎРјРѕС‚СЂСЏ РІР»РµРІРѕ Рё РІРїСЂР°РІРѕ)
         yRotation += mouseX;
 
-        //Следование тела за поворотом 
+        //РЎР»РµРґРѕРІР°РЅРёРµ С‚РµР»Р° Р·Р° РїРѕРІРѕСЂРѕС‚РѕРј 
         transform.localRotation = Quaternion.Euler(xRotation, yRotation, 0f);
     }
 }
