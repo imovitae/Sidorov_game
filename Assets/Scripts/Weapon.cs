@@ -2,149 +2,165 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.AI;
 
 public class Weapon : MonoBehaviour
 {
-
-    //ссылка на камеру проигрователя 
+    public int weaponDamage; // Р”РѕР±Р°РІР»РµРЅ С‚РёРї РґР»СЏ weaponDamage
+    // РЎСЃС‹Р»РєР° РЅР° РєР°РјРµСЂСѓ РёРіСЂРѕРєР° 
     public Camera playerCamera;
 
-    //стрельба 
-    public bool isShooting, readyToShoot; //стрелям или не?
-    //логическое значения для выстрела (один раз)
+    // РЎС‚СЂРµР»СЊР±Р° 
+    public bool isShooting, readyToShoot; // РЎС‚СЂРµР»СЏРµРј РёР»Рё РЅРµС‚?
+    // Р›РѕРіРёС‡РµСЃРєРѕРµ Р·РЅР°С‡РµРЅРёРµ РґР»СЏ РІС‹СЃС‚СЂРµР»Р° (РѕРґРёРЅ СЂР°Р·)
     bool allowReset = true;
-    public float shootingDelay = 2f;//задержка
+    public float shootingDelay = 2f; // Р—Р°РґРµСЂР¶РєР°
 
-
-    public int bulletsPerBurst = 3;//режим стрельбы 
+    public int bulletsPerBurst = 3; // Р РµР¶РёРј СЃС‚СЂРµР»СЊР±С‹ 
     public int burstBulletsLeft;
 
-    //рассеивание или же спрей
+    // Р Р°СЃСЃРµРёРІР°РЅРёРµ РёР»Рё Р¶Рµ СЃРїСЂРµР№
     public float spreadIntensity;
-
 
     public GameObject bulletPrefab;
     public Transform bulletSpawn;
-    public float bulletVelocity = 30;//скорость пули 
-    public float bulletPrefabLifeTime = 3f;//время жизни пули
-                                           //
-//режим стрельбы 
+    public float bulletVelocity = 30; // РЎРєРѕСЂРѕСЃС‚СЊ РїСѓР»Рё 
+    public float bulletPrefabLifeTime = 3f; // Р’СЂРµРјСЏ Р¶РёР·РЅРё РїСѓР»Рё
+                                            //
+    public GameObject MuzzleEffect; // Р­С„С„РµРєС‚ РґР»СЏ РґСѓР»Р°
+    private Animator animator;
+
+    // Р РµР¶РёРј СЃС‚СЂРµР»СЊР±С‹ 
     public enum ShootingMode
     {
-        Single ,
-        Burst ,
+        Single,
+        Burst,
         Auto
     }
 
-    //текущий режим стрельбы 
+    // РўРµРєСѓС‰РёР№ СЂРµР¶РёРј СЃС‚СЂРµР»СЊР±С‹ 
     public ShootingMode currentShootingMode;
 
-
-    //готвность к стрельбе 
+    // Р“РѕС‚РѕРІРЅРѕСЃС‚СЊ Рє СЃС‚СЂРµР»СЊР±Рµ 
     private void Awake()
     {
         readyToShoot = true;
         burstBulletsLeft = bulletsPerBurst;
+        animator = GetComponent<Animator>();
+
+        // РџСЂРѕРІРµСЂРєР° РЅР°Р»РёС‡РёСЏ РєРѕРјРїРѕРЅРµРЅС‚Р° Animator
+        if (animator == null)
+        {
+            Debug.LogError("Animator component is missing on the Weapon game object.");
+        }
     }
 
-
-
-  //  В основном проверки стрельбы ну или же тип стрельбы , который проверяется в этом методе 
+    // Р’ РѕСЃРЅРѕРІРЅРѕРј РїСЂРѕРІРµСЂРєРё СЃС‚СЂРµР»СЊР±С‹ РЅСѓ РёР»Рё Р¶Рµ С‚РёРї СЃС‚СЂРµР»СЊР±С‹, РєРѕС‚РѕСЂС‹Р№ РїСЂРѕРІРµСЂСЏРµС‚СЃСЏ РІ СЌС‚РѕРј РјРµС‚РѕРґРµ 
     void Update()
     {
-        //если нажал левую кнопку мыши , значит хочешь пострелять 
-      /*  if (Input.GetKeyDown(KeyCode.Mouse0)) {
+        // Р•СЃР»Рё РЅР°Р¶Р°Р» Р»РµРІСѓСЋ РєРЅРѕРїРєСѓ РјС‹С€Рё, Р·РЅР°С‡РёС‚ С…РѕС‡РµС€СЊ РїРѕСЃС‚СЂРµР»СЏС‚СЊ 
+        if (Input.GetKeyDown(KeyCode.Mouse0))
+        {
             FireWeapon();
-        }*/
+        }
 
-
-      //учитвание различных методов стрельбы 
+        // РЈС‡С‚РµРЅРёРµ СЂР°Р·Р»РёС‡РЅС‹С… РјРµС‚РѕРґРѕРІ СЃС‚СЂРµР»СЊР±С‹ 
         if (currentShootingMode == ShootingMode.Auto)
         {
-            //удерживание кнопки 
+            // РЈРґРµСЂР¶РёРІР°РЅРёРµ РєРЅРѕРїРєРё 
             isShooting = Input.GetKey(KeyCode.Mouse0);
         }
-        else if(currentShootingMode==ShootingMode.Single || currentShootingMode==ShootingMode.Burst)
+        else if (currentShootingMode == ShootingMode.Single || currentShootingMode == ShootingMode.Burst)
         {
-            //один раз нажал
-            isShooting=Input.GetKeyDown(KeyCode.Mouse1);
+            // РћРґРёРЅ СЂР°Р· РЅР°Р¶Р°Р»
+            isShooting = Input.GetKeyDown(KeyCode.Mouse0);
         }
 
-        //проверка , стреляем ли мы или готовы ли мы к стрельбе 
-        if (readyToShoot && isShooting )
+        // РџСЂРѕРІРµСЂРєР°, СЃС‚СЂРµР»СЏРµРј Р»Рё РјС‹ РёР»Рё РіРѕС‚РѕРІС‹ Р»Рё РјС‹ Рє СЃС‚СЂРµР»СЊР±Рµ 
+        if (readyToShoot && isShooting)
         {
-            //текущее кол-во патронов при каждом разе нашей пальбы 
+            // РўРµРєСѓС‰РµРµ РєРѕР»РёС‡РµСЃС‚РІРѕ РїР°С‚СЂРѕРЅРѕРІ РїСЂРё РєР°Р¶РґРѕРј СЂР°Р·Рµ РЅР°С€РµР№ РїР°Р»СЊР±С‹ 
             burstBulletsLeft = bulletsPerBurst;
             FireWeapon();
         }
     }
 
-  
-    //создание пули предстоваляющей небол. объект | создание пули при каждом выстреле 
+    // РЎРѕР·РґР°РЅРёРµ РїСѓР»Рё РїСЂРµРґСЃС‚Р°РІР»СЏСЋС‰РµР№ РЅРµР±РѕР»СЊС€РѕР№ РѕР±СЉРµРєС‚ | СЃРѕР·РґР°РЅРёРµ РїСѓР»Рё РїСЂРё РєР°Р¶РґРѕРј РІС‹СЃС‚СЂРµР»Рµ 
     private void FireWeapon()
     {
+        MuzzleEffect.GetComponent<ParticleSystem>().Play(); // РђРєС‚РёРІР°С†РёСЏ СЃРёСЃС‚РµРјС‹ С‡Р°СЃС‚РёС† РїСЂРё СЃС‚СЂРµР»СЊР±Рµ
 
-        readyToShoot=false; //значения false так сказать останавливает такую возможность вереницы пуль во время пальбы 
-        Vector3 shootingDirection= CalculateDirectionAndSpread().normalized;    //вектор направления стрельбы и метод который рассчитывает направление и разброс 
+        // РџСЂРѕРІРµСЂРєР° РЅР°Р»РёС‡РёСЏ РєРѕРјРїРѕРЅРµРЅС‚Р° Animator РїРµСЂРµРґ РµРіРѕ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёРµРј
+        if (animator != null)
+        {
+            animator.SetTrigger("RECOIL"); // Р”РѕСЃС‚СѓРї Рє Р°РЅРёРјР°С‚РѕСЂСѓ
+        }
 
+        readyToShoot = false; // Р—РЅР°С‡РµРЅРёРµ false РѕСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ РІРѕР·РјРѕР¶РЅРѕСЃС‚СЊ СЃС‚СЂРµР»СЊР±С‹ 
+        Vector3 shootingDirection = CalculateDirectionAndSpread().normalized; // Р’РµРєС‚РѕСЂ РЅР°РїСЂР°РІР»РµРЅРёСЏ СЃС‚СЂРµР»СЊР±С‹ Рё РјРµС‚РѕРґ РєРѕС‚РѕСЂС‹Р№ СЂР°СЃСЃС‡РёС‚С‹РІР°РµС‚ РЅР°РїСЂР°РІР»РµРЅРёРµ Рё СЂР°Р·Р±СЂРѕСЃ 
 
-        GameObject bullet=Instantiate(bulletPrefab, bulletSpawn.position,Quaternion.identity);//создание пули в месте поялвения и вращение 
+        GameObject bullet = Instantiate(bulletPrefab, bulletSpawn.position, Quaternion.identity); // РЎРѕР·РґР°РЅРёРµ РїСѓР»Рё РІ РјРµСЃС‚Рµ РїРѕСЏРІР»РµРЅРёСЏ Рё РІСЂР°С‰РµРЅРёРµ 
 
-        //экземпляр пули | поворачивание оси вперед для направления выстрела 
+        Bullet bul = bullet.GetComponent<Bullet>();
+        bul.bulletDamage = weaponDamage;
+
+        // Р­РєР·РµРјРїР»СЏСЂ РїСѓР»Рё | РїРѕРІРѕСЂР°С‡РёРІР°РЅРёРµ РѕСЃРё РІРїРµСЂРµРґ РґР»СЏ РЅР°РїСЂР°РІР»РµРЅРёСЏ РІС‹СЃС‚СЂРµР»Р° 
         bullet.transform.forward = shootingDirection;
 
-        //синяя ось за вылет пули 
-        //Приклоадываем к пули усилия . берем компонент твердого тела который находится на теле и прикладываем к нему усилия и прикладываем ему направление | пуля вылетит веперед и умножаем на скорость пули
+        // РџСЂРёР»РѕР¶РµРЅРёРµ Рє РїСѓР»Рё СѓСЃРёР»РёСЏ 
         bullet.GetComponent<Rigidbody>().AddForce(shootingDirection * bulletVelocity, ForceMode.Impulse);
-        //исчезновение пули в течение какого-то времени 
-        StartCoroutine(DestroyBulletAfterTime(bullet, bulletPrefabLifeTime)); //Используем задержку с помощью сопрограммы |DestroyBulletAfterTime|
 
+        // РСЃС‡РµР·РЅРѕРІРµРЅРёРµ РїСѓР»Рё РІ С‚РµС‡РµРЅРёРµ РєР°РєРѕРіРѕ-С‚Рѕ РІСЂРµРјРµРЅРё 
+        StartCoroutine(DestroyBulletAfterTime(bullet, bulletPrefabLifeTime)); // РСЃРїРѕР»СЊР·СѓРµРј Р·Р°РґРµСЂР¶РєСѓ СЃ РїРѕРјРѕС‰СЊСЋ СЃРѕРїСЂРѕРіСЂР°РјРјС‹
 
-        //возможность повторного выстрела 
+        // Р’РѕР·РјРѕР¶РЅРѕСЃС‚СЊ РїРѕРІС‚РѕСЂРЅРѕРіРѕ РІС‹СЃС‚СЂРµР»Р° 
         if (allowReset)
         {
             Invoke("ResetShot", shootingDelay);
-
             allowReset = false;
         }
 
-        //Режим пальбы Busrt
-        if (currentShootingMode==ShootingMode.Burst && burstBulletsLeft > 1 )//если это так , то мы находимся в "очереди"
+        // Р РµР¶РёРј РїР°Р»СЊР±С‹ Burst
+        if (currentShootingMode == ShootingMode.Burst && burstBulletsLeft > 1)
         {
-            burstBulletsLeft--;//уменьшение "очереди"
-            Invoke("FireWeapon", shootingDelay);//принимаем метод огнестрельного оружия для дальнейшей пальбы 
+            burstBulletsLeft--;
+            Invoke("FireWeapon", shootingDelay);
         }
     }
-    //возможность сброса кадра 1 раз 
+
+    // Р’РѕР·РјРѕР¶РЅРѕСЃС‚СЊ СЃР±СЂРѕСЃР° РєР°РґСЂР° 1 СЂР°Р· 
     private void ResetShot()
     {
         readyToShoot = true;
         allowReset = true;
     }
+
     public Vector3 CalculateDirectionAndSpread()
     {
-        //массив для того чтобы узнать куда попадет пуля 
-        Ray ray = playerCamera.ViewportPointToRay(new Vector3(0.5f,0.5f,0));
+        // РњР°СЃСЃРёРІ РґР»СЏ С‚РѕРіРѕ С‡С‚РѕР±С‹ СѓР·РЅР°С‚СЊ РєСѓРґР° РїРѕРїР°РґРµС‚ РїСѓР»СЏ 
+        Ray ray = Camera.main.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
         RaycastHit hit;
         Vector3 targetPoint;
 
-        if (Physics.Raycast(ray,out hit ))//  если попали в цель - сохраняем в этой точке
+        if (Physics.Raycast(ray, out hit))
         {
             targetPoint = hit.point;
         }
         else
         {
-            //пальба в небо , воздух 
+            // РџР°Р»СЊР±Р° РІ РЅРµР±Рѕ, РІРѕР·РґСѓС… 
             targetPoint = ray.GetPoint(100);
         }
-        Vector3 direction = targetPoint - bulletSpawn.position;//вычисление точки прицеливания 
-        float x = UnityEngine.Random.Range(-spreadIntensity, spreadIntensity);//интенсивность Spread
-        float y = UnityEngine.Random.Range(-spreadIntensity, spreadIntensity);//интенсивность Spread
-        return direction + new Vector3(x,y,0);  //вычисление направления и разброса 
+
+        Vector3 direction = targetPoint - bulletSpawn.position;
+        float x = UnityEngine.Random.Range(-spreadIntensity, spreadIntensity);
+        float y = UnityEngine.Random.Range(-spreadIntensity, spreadIntensity);
+        return direction + new Vector3(x, y, 0);
     }
-    private IEnumerator DestroyBulletAfterTime(GameObject bullet, float delay)//Сопрограмма (а не обычный метод), поэтому используем IEnumerator
+
+    private IEnumerator DestroyBulletAfterTime(GameObject bullet, float delay)
     {
-       yield return new WaitForSeconds(delay);//время жизни пули 
-        Destroy(bullet);//уничтожение пули через 3  сек
+        yield return new WaitForSeconds(delay);
+        Destroy(bullet);
     }
 }
